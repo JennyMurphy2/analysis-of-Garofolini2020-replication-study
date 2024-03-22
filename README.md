@@ -1,1 +1,1 @@
-# analysis-of-Garofolini2020-replication-study
+This repository is part of a large replication project conducted by the Sports Science Replication Centre (https://ssreplicationcentre.com/). It includes the data and analyses for the replication study of "A real-time feedback method to reduce loading rate during running: Effect of combining direct and indirect feedback" by Garofolini et al (2020).

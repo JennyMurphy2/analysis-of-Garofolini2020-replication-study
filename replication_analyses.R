@@ -9,6 +9,8 @@ library(tidyverse)
 library(MOTE)
 library(janitor)
 
+set.seed(21)
+
 # Import and prepare data 
 
 data <- read_csv("replication_data.csv") %>%
@@ -95,6 +97,18 @@ data1 %>%
              labeller = label_both) +    
   theme_bw()
 
+# Replication effect size ----------
+
+pes_rep_ci <- eta.F(
+  dfm = anova_results$anova_table$`num Df`,
+  dfe = anova_results$anova_table$`den Df`,
+  Fvalue = anova_results$anova_table$F,
+  a = 0.05) %>%
+  as.data.frame() %>%
+  select(eta, etalow, etahigh) %>%
+  mutate(study_id = c("Replication study")) # add identifier
+pes_rep_ci
+
 # Original values ------
 
 orig_values <- data.frame(
@@ -104,7 +118,20 @@ orig_values <- data.frame(
   eta = 0.56
 ) 
 
-# Replication test -----
+# Reproduce the original effect size ------
+pes_ori_ci <- eta.F(
+  dfm = orig_values$df1,
+  dfe = orig_values$df2,
+  Fvalue = orig_values$f_val,
+  a = 0.05) %>%
+  as.data.frame() %>%
+  select(eta, etalow, etahigh) %>%
+  mutate(study_id = c("Original study")) # add identifier
+pes_ori_ci
+
+# Cannot reproduce the original effect size (0.56) when using original reported values
+
+# Replication Z-test using reported pes -----
 
 pes_rep = anova_results$anova_table$pes
 df_rep = anova_results$anova_table$`den Df`
@@ -121,29 +148,14 @@ rep_test = TOSTER::compare_cor(r1 = rho_ori,
                                alternative = "greater")
 rep_test
 
-# Calculating CI for pes
+# Replication Z-test using calculated pes -----
 
-# Replication
-pes_rep_ci <- eta.F(
-  dfm = anova_results$anova_table$`num Df`,
-  dfe = anova_results$anova_table$`den Df`,
-  Fvalue = anova_results$anova_table$F,
-  a = 0.05) %>%
-  as.data.frame() %>%
-  select(eta, etalow, etahigh) %>%
-  mutate(study_id = c("Replication study")) # add identifier
-pes_rep_ci
+rho_ori_calc = 2*sqrt(pes_ori_ci$eta)-1
 
-# original 
-pes_ori_ci <- eta.F(
-  dfm = orig_values$df1,
-  dfe = orig_values$df2,
-  Fvalue = orig_values$f_val,
-  a = 0.05) %>%
-  as.data.frame() %>%
-  select(eta, etalow, etahigh) %>%
-  mutate(study_id = c("Original study")) # add identifier
-pes_ori_ci
-
-# Cannot reproduce the original effect size when using original reported values
+rep_test = TOSTER::compare_cor(r1 = rho_ori_calc,
+                               df1 = df_ori,
+                               r2 = rho_rep,
+                               df2 = df_rep,
+                               alternative = "greater")
+rep_test
 
